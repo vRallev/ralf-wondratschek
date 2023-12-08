@@ -226,6 +226,14 @@ sealed interface ConnectionAttempt {
                         <p>
                             Through sealed hierarchies Kotlin gives developers more power to model scenarios and flows within their applications.
                         </p>
+                        <h3>Result&#60;T></h3>
+                        <p>
+                            The <a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-result/" target="_blank">Result</a> class is a union type either
+                            with a successful result or an exception. It clearly indicates that a call may fail and the consumer has to handle the exception.
+                            While <code>Result</code> has its place, stronger types and sealed hierarchies are still preferred, because modeled errors provide
+                            richer information, can be extended, aren’t bound to the <code>Throwable</code> type and don’t carry the overhead of allocating
+                            a stacktrace to indicate a failure happened.
+                        </p>
                     </div>
 				</section>
 
