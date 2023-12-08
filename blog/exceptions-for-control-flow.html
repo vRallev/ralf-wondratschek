@@ -1,0 +1,257 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Blog Posts</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="../assets/css/main.css" />
+
+        <link rel="stylesheet" href="../assets/highlight/default.min.css">
+        <script src="../assets/highlight/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script>
+
+        <meta name="description" content="Personal website from Ralf Wondratschek to collect and share presentations, blog-posts and other interesting bits." />
+        <link rel="canonical" href="https://ralf-wondratschek.com/blog-posts">
+
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://ralf-wondratschek.com" />
+        <meta property="og:title" content="Ralf Wondratschek" />
+        <meta property="og:description" content="Personal website from Ralf Wondratschek to collect and share presentations, blog-posts and other interesting bits." />
+        <meta property="og:image" content="https://ralf-wondratschek.com/images/banner.jpg" />
+
+
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:site" content="@vRallev">
+        <meta name="twitter:domain" value="ralf-wondratschek.com" />
+        <meta name="twitter:title" value="Ralf Wondratschek" />
+        <meta name="twitter:description" value="Personal website from Ralf Wondratschek to collect and share presentations, blog-posts and other interesting bits." />
+        <meta name="twitter:image" content="https://ralf-wondratschek.com/images/banner.jpg" />
+        <meta name="twitter:url" value="https://ralf-wondratschek.com" />
+	</head>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-C1C3XVVSM6"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-C1C3XVVSM6');
+    </script>
+
+    <body class="is-preload">
+		<div id="page-wrapper">
+            <header id="header">
+                <nav id="nav">
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/presentations">Presentations</a></li>
+                        <li><a href="/blog-posts">Blog posts</a></li>
+                        <li><a href="/podcasts">Podcasts</a></li>
+                        <li><a href="/cv">CV</a></li>
+                    </ul>
+                </nav>
+            </header>
+
+			<!-- Main -->
+				<section id="main" class="container blog">
+					<div class="box">
+                        <header>
+                            <h2>Exceptions for control flow in Kotlin</h2>
+                            <p>Posted on 2023-12-08</p>
+                        </header>
+                        <h3>Summary</h3>
+                        <p>
+                            Using exceptions for control flow is generally a bad practice in many programming languages and considered an anti-pattern.
+                            This approach is often compared to go-to statements in lower-level languages. Kotlin in particular has no concept of checked
+                            exceptions, which makes the situation even more challenging and unpredictable.
+                        </p>
+                        <p>
+                            Exceptions are best used for checking programmer errors at runtime such invalid arguments and terminating the app with
+                            a meaningful error message and location when an unexpected state is reached. Kotlin handles control flow with sealed types, when
+                            statements and smart casts in an elegant way.
+                        </p>
+                        <h3>Control flow</h3>
+                        <p>
+                            Control flow describes the order of statements being executed in a program. Most often statements are executed from the top
+                            to the bottom with conditional branches, loops and function calls:
+                        </p>
+                        <pre class="language-kotlin"><code>fun hello() {
+  print("Hello ")
+  world()
+}
+
+fun world() {
+  print("world!")
+}</code></pre>
+                        <p>
+                            Above code is easy to read in sequential order and the output <code class="language-plaintext">Hello world!</code> is no surprise.
+                        </p>
+                        <p>
+                            Exceptions break the sequence of statements and the program continues running at a rather random position. Sometimes statements
+                            are wrapped in a try-catch block and the flow is more obvious. Other times exceptions bubble up all the way to the thread exception
+                            handler. The policy of this handler will determine how the program continues, with options ranging from stopping the thread to
+                            crashing the application.
+                        </p>
+                        <p>
+                            Some programming languages such as Java have the concept of checked exceptions. With this paradigm exceptions and their types
+                            become part of the function signature. Callers must handle them or bubble them up further. The advantage of checked exceptions
+                            is that callers cannot ignore them or otherwise the compiler will throw an error. Their downside is that code becomes verbose
+                            especially when many of the APIs expose checked exceptions. As a result, checked exceptions are often handled in outer layers
+                            rather than at the right spot, e.g.
+                        </p>
+                        <pre class="language-kotlin"><code>fun sendRequest(): Response? {
+  return try {
+    val connection = httpClient.openConnection()
+    connection.readResponse()
+  } catch (exception: IOException) {
+    // Generic message.
+    println("Couldn't read response: $exception")
+    null
+  }
+}
+
+// Compared to better descriptive log statements:
+
+fun sendRequest(): Response? {
+  val connection = try {
+    httpClient.openConnection()
+  } catch (exception: IOException) {
+    // More precise error message.
+    println("Coulnd't open connection to server: $exception")
+    return null
+  }
+
+  return try {
+    connection.readResponse()
+  } catch (exception: IOException) {
+    // More precise error message.
+    println("Coulnd't read response from server: $exception")
+    null
+  }
+}</code></pre>
+                        <p>
+                            Kotlin does not support checked exceptions and therefore programmers must rely on documentation to call out when an API throws
+                            an error. Rather than enforcing handling errors at compile time, Kotlin must rely on good intentions by API authors and
+                            consumers of them.
+                        </p>
+                        <p>
+                            Another downside of exceptions is that creating and allocating a stacktrace is an expensive operation even on modern JVMs.
+                            If done frequently such as in a loop, the penalty is measurable and slows down the application, e.g. as highlighted in this
+                            <a href="https://www.liutikas.net/2023/03/09/The-Catch-With-Exceptions.html" target="_blank">example for Gradle</a>.
+                        </p>
+                        <h3>When to use exceptions</h3>
+                        <p>Exceptions are meant for exceptional situations, when something went terribly wrong and the program cannot recover nor continue.
+                            In these moments it’s preferred to fail fast, crash the application and track an error rather than continuing in a half-broken
+                            state and poison other systems such as the backend. This helps developers identifying the problem and provide a safe solution.
+                        </p>
+                        <p>
+                            Another good use case for exceptions is when the the data or input are invalid. This can be considered a programmer error,
+                            because the arguments weren’t checked before passing them. A common example is when converting a String to an Int:
+                        </p>
+                        <pre class="language-kotlin"><code>fun String.toInt(): Int {
+  require(isNotEmpty()) {
+    "An empty string cannot be converted to an integer."
+  }
+  ...
+}</code></pre>
+                        <p>
+                            The Kotlin standard library often provides overloaded functions to return a null value instead of throwing an exception. If the
+                            caller is unclear about the input and skips the check, then it’s more performant and safer to call the function with nullable
+                            return type rather than using a try-catch. This pattern is elegant and often can be adopted in our own APIs.
+                        </p>
+                        <pre class="language-kotlin"><code>fun String.toInt(): Int = ...
+fun String.toIntOrNull(): Int? = ...
+
+fun &#60;T> List&#60;T>.first(): T = this[0]
+fun &#60;T> List&#60;T>.firstOrNull(): T = if (size > 0) this[0] else null</code></pre>
+                        <h3>Modeling expected results in types</h3>
+                        <p>
+                            Since Kotlin doesn’t support checked exception, all expected scenarios and flows should be modeled as types to guarantee safe
+                            handling. Imagine this example:
+                        </p>
+                        <pre class="language-kotlin"><code>interface Connector {
+  fun connectDevice(): Connection
+}
+
+interface Connection {
+  fun sendRequest(request: Request): Response
+}</code></pre>
+                        <p>
+                            This API is problematic. Callers of <code>connectDevice()</code> must assume a successful result based on types alone. Connection failures
+                            are returned in the form of an exception. In this case the caller doesn’t know what kind of exception to catch. Even when the
+                            exception type is documented on the interface as KDoc, there’s no contract in place that implementations will do the right thing
+                            and throw the right exception.
+                        </p>
+                        <p>
+                            One escape hatch is extending the <code>Connection</code> type:
+                        </p>
+                        <pre class="language-kotlin"><code>interface Connection {
+  val connected: Boolean
+
+  fun sendRequest(request: Request): Response
+}</code></pre>
+                        <p>
+                            This solution isn’t very elegant. Callers are required to check the <code>connected</code> flag before calling other APIs such as
+                            <code>sendRequest()</code>. Implementations of <code>Connection</code> must check their internal state before executing functions
+                            like <code>sendRequest()</code> and cannot assume they’re connected either.
+                        </p>
+                        <p>
+                            For Kotlin a better solution is a sealed type:
+                        </p>
+                        <pre class="language-kotlin"><code>interface Connector {
+  fun connectDevice(): ConnectionAttempt
+}
+
+sealed interface ConnectionAttempt {
+
+  interface Connection {
+    fun sendRequest(request: Request): Response
+  } : ConnectionAttempt
+
+  data class Error(val reason: String) : ConnectionAttempt
+}</code></pre>
+                        <p>
+                            This solution is preferred, because callers are enforced by the type system to check whether the connection attempt was
+                            successful or failed. If the connection was successful, then they can proceed safely and call appropriate functions. Kotlin
+                            supports this pattern through <code>when</code> statements and smart casts seamless:
+                        </p>
+                        <pre class="language-kotlin"><code>when (val attempt = connector.connectDevice()) {
+  is Connection -> {
+    val response = attempt.sendRequest(buildRequest())
+    println("Sent request, response: $response")
+  }
+  is Error -> println("Connection failed: ${attempt.reason}")
+}</code></pre>
+                        <p>
+                            Through sealed hierarchies Kotlin gives developers more power to model scenarios and flows within their applications.
+                        </p>
+                    </div>
+				</section>
+
+			<!-- Footer -->
+            <footer id="footer">
+                <ul class="icons">
+                    <li><a href="https://twitter.com/vRallev" target="_blank" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
+                    <li><a href="https://androiddev.social/@ralf" rel="me" target="_blank" class="icon brands fa-mastodon"><span class="label">Mastodon</span></a></li>
+                    <li><a href="https://www.threads.net/@ralf_dev" target="_blank" class="icon brands fa-instagram"><span class="label">Threads</span></a></li>
+                    <li><a href="https://github.com/vRallev" target="_blank" class="icon brands fa-github"><span class="label">Github</span></a></li>
+                    <li><a href="https://www.linkedin.com/in/ralf-wondratschek/" target="_blank" class="icon brands fa-linkedin"><span class="label">LinkedIn</span></a></li>
+                </ul>
+                <ul class="copyright">
+                    <li>&copy; Ralf Wondratschek. All rights reserved.</li><li>Design: <a href="http://html5up.net" target="_blank">HTML5 UP</a></li>
+                </ul>
+            </footer>
+
+		</div>
+
+		<!-- Scripts -->
+		<script src="../assets/js/jquery.min.js"></script>
+		<script src="../assets/js/jquery.dropotron.min.js"></script>
+		<script src="../assets/js/jquery.scrollex.min.js"></script>
+		<script src="../assets/js/browser.min.js"></script>
+		<script src="../assets/js/breakpoints.min.js"></script>
+		<script src="../assets/js/util.js"></script>
+        <script src="../assets/js/main.js"></script>
+	</body>
+</html>

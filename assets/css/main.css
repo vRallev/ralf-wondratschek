@@ -228,7 +228,7 @@
 		padding: 1em 1.5em;
 	}
 
-	code {
+	p code {
 		background: #f8f8f8;
 		border-radius: 6px;
 		border: solid 1px #e5e5e5;
@@ -3900,3 +3900,7 @@
 	.feature-text {
        	color: #646464;
     }
+
+    .blog p {
+		color: black;
+	}

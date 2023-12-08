@@ -247,7 +247,7 @@
 		padding: 1em 1.5em;
 	}
 
-	code {
+	p code {
 		background: _palette(border-bg);
 		border-radius: _size(border-radius);
 		border: solid 1px _palette(border);
@@ -2089,4 +2089,8 @@
 				padding: 2.5em 1em 3em 1em;
 			}
 
+	}
+
+    .blog p {
+		color: black;
 	}
