@@ -3904,3 +3904,42 @@
     .blog p {
 		color: black;
 	}
+
+/* https://stackoverflow.com/questions/38270661/displaying-a-youtube-video-with-iframe-full-width-of-page */
+.videoWrapper {
+  position: relative;
+  padding-bottom: 56.25%;
+  /* 16:9 */
+  padding-top: 25px;
+  height: 0;
+}
+
+.videoWrapper iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+	.presentationLink a {
+		border-bottom: none;
+		color: #646464;
+		text-decoration: none;
+	}
+	.presentationLink a:hover {
+		-moz-transition: color 0.2s ease-in-out;
+        -webkit-transition: color 0.2s ease-in-out;
+        -ms-transition: color 0.2s ease-in-out;
+        transition: color 0.2s ease-in-out;
+		color: #e89980;
+		text-decoration: none;
+	}
+	.presentationLink a:hover b {
+		-moz-transition: color 0.2s ease-in-out;
+        -webkit-transition: color 0.2s ease-in-out;
+        -ms-transition: color 0.2s ease-in-out;
+        transition: color 0.2s ease-in-out;
+		color: #e89980;
+		text-decoration: none;
+	}
