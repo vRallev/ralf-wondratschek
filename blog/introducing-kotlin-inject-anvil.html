@@ -1,0 +1,161 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<title>Introducing kotlin-inject-anvil</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="../assets/css/main.css" />
+
+        <link rel="stylesheet" href="../assets/highlight/default.min.css">
+        <script src="../assets/highlight/highlight.min.js"></script>
+        <script>hljs.highlightAll();</script>
+
+        <meta name="description" content="Personal website from Ralf Wondratschek to collect and share presentations, blog-posts and other interesting bits." />
+        <link rel="canonical" href="https://ralf-wondratschek.com/blog-posts">
+
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://ralf-wondratschek.com" />
+        <meta property="og:title" content="Introducing kotlin-inject-anvil" />
+        <meta property="og:description" content="Personal website from Ralf Wondratschek to collect and share presentations, blog-posts and other interesting bits." />
+        <meta property="og:image" content="https://ralf-wondratschek.com/images/banner.jpg" />
+
+
+        <meta name="twitter:card" content="summary_large_image">
+        <meta name="twitter:site" content="@vRallev">
+        <meta name="twitter:domain" value="ralf-wondratschek.com" />
+        <meta name="twitter:title" value="Introducing kotlin-inject-anvil" />
+        <meta name="twitter:description" value="Personal website from Ralf Wondratschek to collect and share presentations, blog-posts and other interesting bits." />
+        <meta name="twitter:image" content="https://ralf-wondratschek.com/images/banner.jpg" />
+        <meta name="twitter:url" value="https://ralf-wondratschek.com" />
+	</head>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-C1C3XVVSM6"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-C1C3XVVSM6');
+    </script>
+
+    <body class="is-preload">
+		<div id="page-wrapper">
+            <header id="header">
+                <nav id="nav">
+                    <ul>
+                        <li><a href="/">Home</a></li>
+                        <li><a href="/presentations">Presentations</a></li>
+                        <li><a href="/blog-posts">Blog posts</a></li>
+                        <li><a href="/podcasts">Podcasts</a></li>
+                        <li><a href="/cv">CV</a></li>
+                    </ul>
+                </nav>
+            </header>
+
+			<!-- Main -->
+				<section id="main" class="container blog">
+					<div class="box">
+                        <header>
+                            <h2>Introducing <code class="language-plaintext">kotlin-inject-anvil</code></h2>
+                            <p>Posted on 2025-04-03</p>
+                        </header>
+                        <p>
+                            My team open-sourced the dependency injection framework <a href="https://github.com/amzn/kotlin-inject-anvil" target="_blank">kotlin-inject-anvil</a>
+                            a few months ago. Dependency injection is a core piece of our and many mobile architectures in general as it removes coupling and
+                            enables easier testing. What I like about <code class="language-plaintext">kotlin-inject-anvil</code> in particular is that it’s a
+                            compile time dependency injection framework, meaning if you forget to provide a binding or have duplicate bindings, then you get
+                            an error at build time rather later at runtime in the app. This prevents you from shipping bugs to customers.
+                        </p>
+                        <p>
+                            <code class="language-plaintext">kotlin-inject-anvil</code> removes a lot of the boilerplate you often see with other frameworks.
+                            All you have to do is to declare that a specific implementation should be used for a certain API, inject all required dependencies
+                            and the framework takes care of the rest. It couldn’t be simpler than that:
+                        </p>
+                        <pre class="language-kotlin"><code>interface WeatherRepository {
+    suspend fun provideForcast(): Forecast
+}
+
+@Inject
+@SingleIn(AppScope::class)
+@ContributesBinding(AppScope::class)
+class NetworkWeatherRepository(
+    private val httpClient: HttpClient,
+) : WeatherRepository {
+    override suspend fun provideForecast(): Forecast {
+        val jsonResponse = httpClient.sendRequest(..)
+        return Json.decodeFromString&lt;Forecast&gt;(jsonResponse)
+    }
+}
+</code></pre>
+                        <p>
+                            Once you’re accustomed to the annotations, you’ll quickly stop thinking about common questions such as where your dependencies like
+                            the <code class="language-plaintext">HttpClient</code> are coming from, how the dependencies are implemented, where and when
+                            they’re instantiated, how to implement singletons, how to cache objects within a certain lifecycle, etc. Need another dependency?
+                            No problem, simply add another constructor parameter. These are problems the framework solves for you.
+                        </p>
+                        <p>
+                            The best part about <code class="language-plaintext">kotlin-inject-anvil</code> is that it was purposefully built for Kotlin
+                            Multiplatform. It allows you to implement common APIs with platform specific dependencies.
+                            No <code class="language-plaintext">expect</code> / <code class="language-plaintext">actual</code> declarations nor custom wiring
+                            is needed. All you as consumer have to do is adding annotations to the implementation classes and the framework takes
+                            care of the rest:
+                        </p>
+                        <pre class="language-kotlin"><code>// src/commonMain
+interface WeatherRepository {
+    suspend fun provideForcast(): Forecast
+}
+
+// src/androidMain
+@Inject
+@SingleIn(AppScope::class)
+@ContributesBinding(AppScope::class)
+class AndroidWeatherRepository(
+    private val application: Application,
+) : WeatherRepository { ... }
+
+// src/iosMain
+@Inject
+@SingleIn(AppScope::class)
+@ContributesBinding(AppScope::class)
+class IosWeatherRepository(
+    private val uiApplication: UIApplication,
+) : WeatherRepository { ... }
+</code></pre>
+                        <p>
+                            Dependency injection keeps evolving and becomes simpler and more flexible in each iteration. The next step will be
+                            <a href="https://zacsweers.github.io/metro/" target="_blank">Metro</a>, which combines many of the learnings of previous
+                            frameworks and adds a deeper integration with the Kotlin compiler and IDE. I’ll summarize this evolution and
+                            how <code class="language-plaintext">kotlin-inject-anvil</code> helps us in practice at
+                            my <a href="https://kotlinconf.com/schedule/?day=2025-05-23&session=07346baa-449f-511b-a34b-9ccc44263927" target="_blank">KotlinConf 2025 talk</a>.
+                        </p>
+                    </div>
+				</section>
+
+			<!-- Footer -->
+                <footer id="footer">
+                    <ul class="icons">
+                        <li><a href="https://twitter.com/vRallev" target="_blank" class="icon brands fa-twitter"><span class="label">Twitter</span></a></li>
+                        <li><a href="https://androiddev.social/@ralf" rel="me" target="_blank" class="icon brands fa-mastodon"><span class="label">Mastodon</span></a></li>
+                        <li><a href="https://bsky.app/profile/ralf-wondratschek.com" target="_blank" class="icon brands fa-bluesky"><span class="label">Threads</span></a></li>
+                        <li><a href="https://www.threads.net/@ralf_dev" target="_blank" class="icon brands fa-threads"><span class="label">Threads</span></a></li>
+                        <li><a href="https://github.com/vRallev" target="_blank" class="icon brands fa-github"><span class="label">Github</span></a></li>
+                        <li><a href="https://www.linkedin.com/in/ralf-wondratschek/" target="_blank" class="icon brands fa-linkedin"><span class="label">LinkedIn</span></a></li>
+                    </ul>
+                    <ul class="copyright">
+                        <li>&copy; Ralf Wondratschek. All rights reserved.</li><li>Design: <a href="http://html5up.net" target="_blank">HTML5 UP</a></li>
+                    </ul>
+                </footer>
+
+		</div>
+
+		<!-- Scripts -->
+		<script src="../assets/js/jquery.min.js"></script>
+		<script src="../assets/js/jquery.dropotron.min.js"></script>
+		<script src="../assets/js/jquery.scrollex.min.js"></script>
+		<script src="../assets/js/browser.min.js"></script>
+		<script src="../assets/js/breakpoints.min.js"></script>
+		<script src="../assets/js/util.js"></script>
+        <script src="../assets/js/main.js"></script>
+	</body>
+</html>
